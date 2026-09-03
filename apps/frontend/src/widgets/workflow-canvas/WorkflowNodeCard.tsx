@@ -28,7 +28,9 @@ export const WorkflowNodeCard = ({
       <div className="workflow-node__body">
         {node.type === "prompt" && <p>{node.data.prompt || "No prompt"}</p>}
         {node.type === "imageInput" && <p>{node.data.imageUrl || "No image URL"}</p>}
-        {node.type === "generateImage" && <p>Text to image</p>}
+        {node.type === "generateImage" && (
+          <p>{node.data.promptOverride || "Text to image"}</p>
+        )}
         {node.type === "editImage" && <p>{node.data.instruction || "Image edit"}</p>}
         {node.type === "result" && imageOutput?.type === "image" && (
           <img src={imageOutput.url} alt={node.name} />

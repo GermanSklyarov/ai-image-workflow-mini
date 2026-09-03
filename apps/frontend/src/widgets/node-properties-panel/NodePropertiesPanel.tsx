@@ -56,7 +56,7 @@ export const NodePropertiesPanel = ({
 
       {workflowNode.type === "generateImage" && (
         <label>
-          Prompt override
+          Prompt details
           <textarea
             value={workflowNode.data.promptOverride ?? ""}
             onChange={(event) => update({ promptOverride: event.target.value })}

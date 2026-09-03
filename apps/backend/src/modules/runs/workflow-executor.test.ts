@@ -27,6 +27,7 @@ class TestProvider implements ImageGenerationProvider {
     startedAt: number;
     finishedAt?: number;
   }> = [];
+  readonly editCalls: EditImageInput[] = [];
   private readonly delayMs: number;
   private readonly failNodeNames: string[];
   private failOncePrompts: string[];
@@ -98,6 +99,8 @@ class TestProvider implements ImageGenerationProvider {
   }
 
   async edit(input: EditImageInput): Promise<ImageValue> {
+    this.editCalls.push(input);
+
     const image: ImageValue = {
       type: "image",
       url: `${input.image.url}?edited=true`,
@@ -145,6 +148,30 @@ const generateNode = (id: string, promptOverride?: string): WorkflowNode => ({
     port(id, "image", "output", "image", false),
   ],
   data: promptOverride ? { promptOverride } : {},
+});
+
+const imageInputNode = (id = "image", imageUrl = "https://example.com/input.png"): WorkflowNode => ({
+  id,
+  type: "imageInput",
+  name: id,
+  ports: [port(id, "image", "output", "image", false)],
+  data: {
+    imageUrl,
+    mimeType: "image/png",
+  },
+});
+
+const editNode = (id: string, instruction = "Improve lighting"): WorkflowNode => ({
+  id,
+  type: "editImage",
+  name: id,
+  ports: [
+    port(id, "imageInput", "input", "image"),
+    port(id, "image", "output", "image", false),
+  ],
+  data: {
+    instruction,
+  },
 });
 
 const resultNode = (id: string, dataType: PortDataType = "image"): WorkflowNode => ({
@@ -414,4 +441,55 @@ test("passes preset prompt details to the image provider", async () => {
     "/references/ref-1.png",
     "/references/ref-2.png",
   ]);
+});
+
+test("combines upstream prompt with generate node prompt details", async () => {
+  const provider = new TestProvider();
+  const executor = createExecutor(provider);
+  const run = executor.createRun({
+    workflow: workflow(
+      [
+        promptNode("prompt", "A futuristic electric sports car"),
+        generateNode("generate", "cinematic night scene, neon city, wet asphalt"),
+      ],
+      [edge("prompt", "text", "generate", "prompt")],
+    ),
+  });
+
+  await waitForRun(executor, run.id);
+
+  assert.equal(provider.calls.length, 1);
+  assert.match(provider.calls[0]?.prompt ?? "", /A futuristic electric sports car/);
+  assert.match(
+    provider.calls[0]?.prompt ?? "",
+    /cinematic night scene, neon city, wet asphalt/,
+  );
+});
+
+test("passes image input and edit instruction to edit nodes", async () => {
+  const provider = new TestProvider();
+  const executor = createExecutor(provider);
+  const run = executor.createRun({
+    workflow: workflow(
+      [
+        imageInputNode("image", "https://example.com/source.png"),
+        editNode("edit", "Make it warmer"),
+        resultNode("result"),
+      ],
+      [
+        edge("image", "image", "edit", "imageInput"),
+        edge("edit", "image", "result", "input"),
+      ],
+    ),
+  });
+
+  const completedRun = await waitForRun(executor, run.id);
+
+  assert.equal(completedRun.status, "completed");
+  assert.equal(provider.editCalls.length, 1);
+  assert.equal(provider.editCalls[0]?.image.url, "https://example.com/source.png");
+  assert.equal(provider.editCalls[0]?.instruction, "Make it warmer");
+  const resultOutput = completedRun.nodeOutputs.result?.value;
+  assert.ok(resultOutput);
+  assert.equal(resultOutput.type, "image");
 });

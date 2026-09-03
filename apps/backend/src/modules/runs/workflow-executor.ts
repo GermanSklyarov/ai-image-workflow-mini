@@ -247,9 +247,11 @@ export class WorkflowExecutor {
         }
       case "generateImage": {
         const prompt = this.findInput(input, "text");
-        const promptText =
-          node.data.promptOverride ??
-          (prompt.type === "text" ? prompt.value : undefined);
+        const upstreamPrompt = prompt.type === "text" ? prompt.value : "";
+        const promptText = [upstreamPrompt, node.data.promptOverride]
+          .map((part) => part?.trim())
+          .filter(Boolean)
+          .join("\n\n");
 
         if (!promptText) {
           throw new Error(`Generate node "${node.id}" requires text input.`);
