@@ -1,1 +1,4 @@
-export const App = () => <main>AI Image Workflow Mini</main>;
+import { WorkflowEditorPage } from "../pages/workflow-editor";
+import "./styles.css";
+
+export const App = () => <WorkflowEditorPage />;
