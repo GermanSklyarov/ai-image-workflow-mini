@@ -68,14 +68,14 @@ Shared domain contracts live in `packages/shared-types` and are reused by both a
 startRun(workflow):
   validate workflow graph and port compatibility
   create run with queued status
-  create idle jobs for executable nodes
+  create queued jobs for workflow nodes
   mark source/input nodes as success with their provided outputs
   set run status to running
   scheduleReadyJobs()
 
 scheduleReadyJobs():
   readyJobs = executable jobs where:
-    job status is idle or queued
+    job status is queued
     every upstream dependency has status success
 
   if readyJobs is empty:
@@ -103,7 +103,7 @@ retryNode(runId, nodeId):
   require failed executable job
   clear its error/output
   mark it queued
-  clear downstream job outputs and reset downstream executable jobs to idle
+  clear downstream job outputs and reset downstream jobs to queued
   set run status running
   scheduleReadyJobs()
 ```
@@ -118,17 +118,19 @@ Prompt
 
 ## Current Scope
 
-Implemented in this first step:
+Implemented:
 
 - project scaffold;
 - pragmatic FSD frontend folders;
 - Fastify backend module folders;
 - reusable shared TypeScript domain types;
-- AI provider interface and mock provider shell.
+- AI provider interface and mock provider shell;
+- workflow validation for missing references, typed ports, required inputs, and cycles;
+- in-memory runs;
+- dependency-based graph execution with concurrent ready nodes;
+- REST endpoints for creating, reading, and retrying runs.
 
 Not implemented yet:
 
 - UI;
-- REST endpoints;
-- graph runner implementation;
 - real image-generation API integration.

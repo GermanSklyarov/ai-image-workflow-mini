@@ -8,7 +8,8 @@
     "packages/*"
   ],
   "scripts": {
-    "typecheck": "tsc -b"
+    "typecheck": "tsc -b",
+    "test": "npm run test --workspace @ai-image-workflow/backend"
   },
   "devDependencies": {
     "typescript": "^5.9.2"

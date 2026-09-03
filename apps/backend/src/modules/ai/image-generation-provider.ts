@@ -14,6 +14,6 @@ export interface EditImageInput {
 }
 
 export interface ImageGenerationProvider {
-  generateImage(input: GenerateImageInput): Promise<ImageValue>;
-  editImage(input: EditImageInput): Promise<ImageValue>;
+  generate(input: GenerateImageInput): Promise<ImageValue>;
+  edit(input: EditImageInput): Promise<ImageValue>;
 }

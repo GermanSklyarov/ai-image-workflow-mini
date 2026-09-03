@@ -1,7 +1,7 @@
 import type { ImageGenerationProvider } from "./image-generation-provider";
 
 export class MockImageGenerationProvider implements ImageGenerationProvider {
-  async generateImage() {
+  async generate() {
     return {
       type: "image" as const,
       url: "mock://generated-image",
@@ -9,7 +9,7 @@ export class MockImageGenerationProvider implements ImageGenerationProvider {
     };
   }
 
-  async editImage() {
+  async edit() {
     return {
       type: "image" as const,
       url: "mock://edited-image",

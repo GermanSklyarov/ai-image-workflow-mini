@@ -1,4 +1,5 @@
 import Fastify from "fastify";
+import { registerRunsRoutes } from "../modules/runs";
 
 export const buildApp = () => {
   const app = Fastify({
@@ -8,6 +9,8 @@ export const buildApp = () => {
   app.get("/health", async () => ({
     ok: true,
   }));
+
+  registerRunsRoutes(app);
 
   return app;
 };

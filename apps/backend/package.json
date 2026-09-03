@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc -b",
+    "test": "node --import tsx --test \"src/**/*.test.ts\"",
     "dev": "tsx watch src/main.ts"
   },
   "dependencies": {
