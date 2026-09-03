@@ -139,7 +139,7 @@ Supported node behavior:
 
 - `prompt`: produces text from node config.
 - `imageInput`: produces an image URL/reference from node config.
-- `generateImage`: consumes text, combines it with the selected preset, calls the image provider.
+- `generateImage`: consumes upstream text, appends its own branch-specific prompt details when present, combines the result with the selected preset, and calls the image provider.
 - `editImage`: consumes image and uses mock-compatible provider structure; real edit API integration is not implemented.
 - `result`: exposes the upstream value and shows image output in the frontend when present.
 
@@ -234,9 +234,12 @@ Example:
 Preset request composition lives in backend `modules/ai/request-builder.ts`, not in React components. It combines:
 
 - user prompt;
+- generate-node prompt details, when configured;
 - `preset.mainPrompt`;
 - `preset.negativePrompt`;
 - `preset.references`.
+
+Generate-node prompt details are additive, not a replacement for the upstream Prompt node. For example, if the first node says `A futuristic electric sports car` and two Generate nodes contain `cinematic night scene, neon city, wet asphalt` and `minimal studio product shot, white background`, the backend sends two full prompts that both keep the car subject while varying the branch-specific scene.
 
 ## AI Provider Integration
 
