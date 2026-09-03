@@ -58,7 +58,7 @@ Shared domain contracts live in `packages/shared-types` and are reused by both a
 
 `modules/presets`: preset catalog/storage and lookup.
 
-`modules/ai`: `ImageGenerationProvider` boundary plus mock provider now and a real text-to-image provider later.
+`modules/ai`: `ImageGenerationProvider` boundary, Stability AI provider, mock provider for tests, and generated image storage.
 
 `shared`: Fastify setup, environment parsing, common errors/utilities.
 
@@ -124,13 +124,36 @@ Implemented:
 - pragmatic FSD frontend folders;
 - Fastify backend module folders;
 - reusable shared TypeScript domain types;
-- AI provider interface and mock provider shell;
+- AI provider interface, Stability AI provider, and mock provider for tests;
 - workflow validation for missing references, typed ports, required inputs, and cycles;
 - in-memory runs;
 - dependency-based graph execution with concurrent ready nodes;
-- REST endpoints for creating, reading, and retrying runs.
+- REST endpoints for creating, reading, and retrying runs;
+- React Flow editor with typed handles and polling run status;
+- local generated image storage served from `/generated/:fileName`.
 
 Not implemented yet:
 
-- UI;
-- real image-generation API integration.
+- real edit-image provider call.
+
+## Stability AI Setup
+
+The backend uses Stability AI Stable Image Core:
+
+```text
+POST https://api.stability.ai/v2beta/stable-image/generate/core
+```
+
+Create a local `.env` file in the repository root or in `apps/backend/`:
+
+```text
+STABILITY_API_KEY=
+```
+
+Put the Stability API key after `=`. The key is read only by the backend and is never sent to frontend code. Generated image bytes are saved under a backend-controlled `generated/` directory and returned to the frontend as local `/generated/...` URLs.
+
+Run both apps from the repository root:
+
+```bash
+npm run dev
+```

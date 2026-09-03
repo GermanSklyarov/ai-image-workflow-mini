@@ -20,8 +20,13 @@ import { RunStore } from "./run-store";
 import { WorkflowExecutor } from "./workflow-executor";
 
 class TestProvider implements ImageGenerationProvider {
-  readonly calls: Array<{ prompt: string; startedAt: number; finishedAt?: number }> =
-    [];
+  readonly calls: Array<{
+    prompt: string;
+    negativePrompt?: string;
+    references?: string[];
+    startedAt: number;
+    finishedAt?: number;
+  }> = [];
   private readonly delayMs: number;
   private readonly failNodeNames: string[];
   private failOncePrompts: string[];
@@ -40,10 +45,25 @@ class TestProvider implements ImageGenerationProvider {
 
   async generate(input: GenerateImageInput): Promise<ImageValue> {
     const startedAt = Date.now();
-    const call: { prompt: string; startedAt: number; finishedAt?: number } = {
+    const call: {
+      prompt: string;
+      negativePrompt?: string;
+      references?: string[];
+      startedAt: number;
+      finishedAt?: number;
+    } = {
       prompt: input.prompt,
       startedAt,
     };
+
+    if (input.negativePrompt) {
+      call.negativePrompt = input.negativePrompt;
+    }
+
+    if (input.references) {
+      call.references = input.references;
+    }
+
     this.calls.push(call);
 
     if (this.delayMs) {
@@ -371,4 +391,27 @@ test("detects cycles", () => {
 
   assert.equal(validation.valid, false);
   assert.ok(validation.issues.some((issue) => issue.code === "cycle_detected"));
+});
+
+test("passes preset prompt details to the image provider", async () => {
+  const provider = new TestProvider();
+  const executor = createExecutor(provider);
+  const run = executor.createRun({
+    presetId: "preset-demo",
+    workflow: workflow(
+      [promptNode("prompt", "user product prompt"), generateNode("generate")],
+      [edge("prompt", "text", "generate", "prompt")],
+    ),
+  });
+
+  await waitForRun(executor, run.id);
+
+  assert.equal(provider.calls.length, 1);
+  assert.match(provider.calls[0]?.prompt ?? "", /premium minimal 3D visual/);
+  assert.match(provider.calls[0]?.prompt ?? "", /user product prompt/);
+  assert.equal(provider.calls[0]?.negativePrompt, "clutter, noisy background");
+  assert.deepEqual(provider.calls[0]?.references, [
+    "/references/ref-1.png",
+    "/references/ref-2.png",
+  ]);
 });

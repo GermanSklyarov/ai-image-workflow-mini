@@ -1,4 +1,3 @@
-import { randomUUID } from "node:crypto";
 import type {
   ImageValue,
   NodeOutputMap,
@@ -10,19 +9,17 @@ import type {
   WorkflowNode,
   WorkflowRun,
 } from "@ai-image-workflow/shared-types";
-import { buildGenerationRequest } from "../ai/request-builder";
-import { withTimeout } from "../ai/with-timeout";
+import { randomUUID } from "node:crypto";
 import type { ImageGenerationProvider } from "../ai/image-generation-provider";
+import { buildGenerationRequest } from "../ai/request-builder";
 import type { PresetStore } from "../presets";
 import {
   createWorkflowGraph,
   readNodeInputs,
+  validateWorkflow,
   type WorkflowGraph,
 } from "../workflows";
-import { validateWorkflow } from "../workflows";
 import type { RunStore } from "./run-store";
-
-const AI_TIMEOUT_MS = 15_000;
 
 export interface CreateRunInput {
   workflow: WorkflowDefinition;
@@ -258,10 +255,8 @@ export class WorkflowExecutor {
           throw new Error(`Generate node "${node.id}" requires text input.`);
         }
 
-        const image = await withTimeout(
-          this.provider.generate(buildGenerationRequest(promptText, preset)),
-          AI_TIMEOUT_MS,
-          `Generate node "${node.id}"`,
+        const image = await this.provider.generate(
+          buildGenerationRequest(promptText, preset),
         );
 
         return {
@@ -289,18 +284,11 @@ export class WorkflowExecutor {
 
         if (preset?.references.length) {
           Object.assign(editInput, {
-            referenceImages: preset.references.map((url) => ({
-              type: "image",
-              url,
-            })),
+            references: preset.references,
           });
         }
 
-        const editedImage = await withTimeout(
-          this.provider.edit(editInput),
-          AI_TIMEOUT_MS,
-          `Edit node "${node.id}"`,
-        );
+        const editedImage = await this.provider.edit(editInput);
 
         return {
           [outputPort.id]: editedImage,

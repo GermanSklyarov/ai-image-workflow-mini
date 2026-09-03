@@ -1,8 +1,22 @@
 import Fastify from "fastify";
+import {
+  GeneratedImageStorage,
+  StabilityImageGenerationProvider,
+} from "../modules/ai";
+import { registerGeneratedRoutes } from "../modules/generated";
 import { registerPresetsRoutes } from "../modules/presets";
 import { registerRunsRoutes } from "../modules/runs";
+import { PresetStore } from "../modules/presets";
+import { RunStore, WorkflowExecutor } from "../modules/runs";
+import { loadEnvFiles, readBackendEnv } from "./env";
 
 export const buildApp = () => {
+  loadEnvFiles();
+  const env = readBackendEnv();
+  const storage = new GeneratedImageStorage();
+  const presetStore = new PresetStore();
+  const provider = new StabilityImageGenerationProvider(env.stabilityApiKey, storage);
+  const executor = new WorkflowExecutor(new RunStore(), provider, presetStore);
   const app = Fastify({
     logger: true,
   });
@@ -21,10 +35,13 @@ export const buildApp = () => {
 
   app.get("/health", async () => ({
     ok: true,
+    imageProvider: "stability",
+    stabilityConfigured: Boolean(env.stabilityApiKey),
   }));
 
-  registerPresetsRoutes(app);
-  registerRunsRoutes(app);
+  registerGeneratedRoutes(app, { storage });
+  registerPresetsRoutes(app, { presetStore });
+  registerRunsRoutes(app, { executor });
 
   return app;
 };

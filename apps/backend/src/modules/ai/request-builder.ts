@@ -1,4 +1,4 @@
-import type { ImageValue, Preset } from "@ai-image-workflow/shared-types";
+import type { Preset } from "@ai-image-workflow/shared-types";
 import type { GenerateImageInput } from "./image-generation-provider";
 
 export const buildGenerationRequest = (
@@ -15,12 +15,7 @@ export const buildGenerationRequest = (
   }
 
   if (preset?.references.length) {
-    request.referenceImages = preset.references.map(
-      (url): ImageValue => ({
-        type: "image",
-        url,
-      }),
-    );
+    request.references = preset.references;
   }
 
   return request;

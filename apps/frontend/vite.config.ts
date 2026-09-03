@@ -7,6 +7,7 @@ export default defineConfig({
     proxy: {
       "/runs": "http://localhost:3001",
       "/presets": "http://localhost:3001",
+      "/generated": "http://localhost:3001",
     },
   },
 });
