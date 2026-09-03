@@ -1,0 +1,134 @@
+# AI Image Workflow Mini
+
+Minimal technical-test implementation plan and scaffold.
+
+## Target Architecture
+
+This project is a small TypeScript monorepo:
+
+```text
+ai-image-workflow-mini/
+  apps/
+    frontend/
+      src/
+        app/
+        pages/
+        widgets/
+        features/
+        entities/
+        shared/
+    backend/
+      src/
+        modules/
+          workflows/
+          runs/
+          presets/
+          ai/
+        shared/
+  packages/
+    shared-types/
+  README.md
+```
+
+Frontend: React, TypeScript, Vite, `@xyflow/react`.
+
+Backend: Fastify, TypeScript.
+
+Shared domain contracts live in `packages/shared-types` and are reused by both apps. Runs and jobs are stored in memory. The browser talks to the backend via REST and polls run status. AI API keys belong only to the backend.
+
+## Frontend Responsibilities
+
+`app`: app bootstrap, providers, routing composition.
+
+`pages`: route-level screens such as the workflow editor page and run details page.
+
+`widgets`: composed UI blocks, for example graph canvas, run status panel, preset selector.
+
+`features`: user actions with business intent, for example creating a run, retrying a failed node, connecting graph ports, selecting a preset.
+
+`entities`: domain-facing frontend models and adapters for workflows, presets, runs, jobs, nodes, and ports.
+
+`shared`: UI primitives, API client, config, utility code with no domain ownership.
+
+## Backend Responsibilities
+
+`modules/workflows`: workflow definition validation, typed port compatibility, dependency graph helpers.
+
+`modules/runs`: run creation, in-memory run/job storage, graph execution orchestration, retry failed node.
+
+`modules/presets`: preset catalog/storage and lookup.
+
+`modules/ai`: `ImageGenerationProvider` boundary plus mock provider now and a real text-to-image provider later.
+
+`shared`: Fastify setup, environment parsing, common errors/utilities.
+
+## Execution Algorithm
+
+```text
+startRun(workflow):
+  validate workflow graph and port compatibility
+  create run with queued status
+  create idle jobs for executable nodes
+  mark source/input nodes as success with their provided outputs
+  set run status to running
+  scheduleReadyJobs()
+
+scheduleReadyJobs():
+  readyJobs = executable jobs where:
+    job status is idle or queued
+    every upstream dependency has status success
+
+  if readyJobs is empty:
+    if any job is running:
+      return
+    if any executable job is error:
+      mark run failed
+    else:
+      mark run completed
+    return
+
+  for each ready job:
+    mark job running
+    execute job asynchronously
+      on success:
+        store outputs
+        mark job success
+        scheduleReadyJobs()
+      on error:
+        store error
+        mark job error
+        if no other jobs can progress, mark run failed
+
+retryNode(runId, nodeId):
+  require failed executable job
+  clear its error/output
+  mark it queued
+  clear downstream job outputs and reset downstream executable jobs to idle
+  set run status running
+  scheduleReadyJobs()
+```
+
+Because `scheduleReadyJobs` starts every currently ready job without waiting for sibling branches, this graph can execute `Generate A` and `Generate B` concurrently:
+
+```text
+Prompt
+  |-- Generate A -- Result A
+  `-- Generate B -- Result B
+```
+
+## Current Scope
+
+Implemented in this first step:
+
+- project scaffold;
+- pragmatic FSD frontend folders;
+- Fastify backend module folders;
+- reusable shared TypeScript domain types;
+- AI provider interface and mock provider shell.
+
+Not implemented yet:
+
+- UI;
+- REST endpoints;
+- graph runner implementation;
+- real image-generation API integration.

@@ -1,0 +1,19 @@
+{
+  "name": "@ai-image-workflow/backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc -b",
+    "dev": "tsx watch src/main.ts"
+  },
+  "dependencies": {
+    "@ai-image-workflow/shared-types": "file:../../packages/shared-types",
+    "fastify": "^5.6.2"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.2"
+  }
+}

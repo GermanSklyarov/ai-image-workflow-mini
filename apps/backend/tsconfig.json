@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "types": ["node"],
+    "composite": true
+  },
+  "references": [
+    {
+      "path": "../../packages/shared-types"
+    }
+  ],
+  "include": ["src"]
+}
